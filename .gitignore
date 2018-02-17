@@ -1,0 +1,10 @@
+*#
+*~
+.#*
+tags
+TAGS
+*.pyc
+*.egg-info
+env
+build
+__pycache__
