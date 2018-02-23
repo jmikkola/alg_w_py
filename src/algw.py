@@ -42,7 +42,6 @@ class EAbs(Expression):
         tenv0 = tenv.remove(self.x)
         tenv1 = tenv0.add(self.x, Scheme([], tvar))
         sub1, type1 = self.expr.get_type(tenv1, type_inference)
-        # TODO: Why apply sub here?
         return sub1, TFunc(tvar.apply_sub(sub1), type1)
 
 
@@ -57,7 +56,6 @@ class EApp(Expression):
     def get_type(self, tenv, type_inference):
         tvar = TVar(type_inference.new_type_var())
         sub1, type1 = self.e1.get_type(tenv, type_inference)
-        # TODO: Again, why apply that sub?
         sub2, type2 = self.e2.get_type(tenv.apply_sub(sub1), type_inference)
         sub3 = type_inference.most_general_unifier(
             type1.apply_sub(sub2), TFunc(type2, tvar)
@@ -132,6 +130,12 @@ class TVar(Type):
     def show(self):
         return self.name
 
+    def __str__(self):
+        return 'TVar({})'.format(self.name)
+
+    def __repr__(self):
+        return 'TVar({!r})'.format(self.name)
+
 
 class TInt(Type):
     def show(self):
@@ -168,6 +172,9 @@ class TFunc(Type):
     def show(self):
         return self.left.show() + ' -> ' + self.right.show()
 
+    def __repr__(self):
+        return 'TFunc({}, {})'.format(self.left, self.right)
+
 
 class Scheme:
     def __init__(self, bound, t):
@@ -198,9 +205,6 @@ class Scheme:
 
 
 def compose_subs(s1, s2):
-    '''
-    The logic here is pretty unclear to me
-    '''
     out = {v: t for v, t in s1.items()}
     for v, t in s2.items():
         out[v] = t.apply_sub(s1)
@@ -218,8 +222,6 @@ class TypeEnv:
         return ftvs
 
     def apply_sub(self, sub):
-        ''' I'm not sure I get what it means to apply a
-        substitution to a type env '''
         return TypeEnv({
             v: scheme.apply_sub(sub)
             for v, scheme in self.schemes.items()
@@ -238,7 +240,6 @@ class TypeEnv:
         return TypeEnv(copy)
 
     def generalize(self, t):
-        ''' This I only vaguely understand '''
         bound_vars = t.free_type_variables() - self.free_type_variables()
         return Scheme(bound_vars, t)
 
