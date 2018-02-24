@@ -70,6 +70,9 @@ class EApp(Expression):
         # because that already happens when typing the variable that evaluates
         # to the function.
 
+        # Generate the tvar now just to make the numbering make sense:
+        tvar = TVar(type_inference.new_type_var())
+
         # First, find the type of the function.
         sub1, type1 = self.e1.get_type(tenv, type_inference)
         # Finding that type may have resulted in substitutions that apply
@@ -81,7 +84,6 @@ class EApp(Expression):
         # We use tvar to represent the return type of the function in this
         # particular instance.
         # sub2 is applied to type1 in case that further narrows the type.
-        tvar = TVar(type_inference.new_type_var())
         sub3 = type_inference.most_general_unifier(
             type1.apply_sub(sub2), TFunc(type2, tvar)
         )
@@ -118,7 +120,8 @@ class ELet(Expression):
 
         # Use that new type env (with sub1 applied to it) to find the type
         # of the inner expression.
-        sub2, type2 = self.e2.get_type(tenv1.apply_sub(sub1), type_inference)
+        tenv1_sub = tenv1.apply_sub(sub1)
+        sub2, type2 = self.e2.get_type(tenv1_sub, type_inference)
         # The resulting substitution takes both of the other substitutions
         # into account.
         return compose_subs(sub1, sub2), type2
@@ -202,7 +205,7 @@ class TFunc(Type):
             raise Exception(left)
         if not isinstance(right, Type):
             raise Exception(right)
-        self.left = right
+        self.left = left
         self.right = right
 
     def __eq__(self, other):
@@ -276,6 +279,9 @@ class Scheme:
     def __str__(self):
         return 'Scheme({}, {})'.format(self.bound, self.t.show())
 
+    def __repr__(self):
+        return str(self)
+
 
 def compose_subs(s1, s2):
     out = {v: t for v, t in s1.items()}
@@ -339,6 +345,9 @@ class TypeEnv:
 
     def __getitem__(self, name):
         return self.schemes[name]
+
+    def __str__(self):
+        return 'TypeEnv({})'.format(self.schemes)
 
 
 class TypeInference:
@@ -417,6 +426,18 @@ def main():
         'inc': Scheme([], TFunc(TInt(), TInt())),
     }
     print(infer_type(expr2, starting_env=env2).show())
+
+    expr3 = EAbs(
+        'x',
+        ELet(
+            'y', EApp(EVar('inc'), EVar('x')),
+            EVar('x')
+        )
+    )
+    env3 = {
+        'inc': Scheme([], TFunc(TInt(), TInt())),
+    }
+    print(infer_type(expr3, starting_env=env3).show())
 
 
 if __name__ == '__main__':
