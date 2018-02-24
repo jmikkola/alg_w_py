@@ -151,6 +151,9 @@ class Type:
     def apply_sub(self, sub):
         return self
 
+    def __repr__(self):
+        return str(self)
+
 
 class TVar(Type):
     def __init__(self, name):
@@ -181,10 +184,16 @@ class TInt(Type):
     def show(self):
         return 'Int'
 
+    def __str__(self):
+        return 'TInt()'
+
 
 class TFloat(Type):
     def show(self):
         return 'Float'
+
+    def __str__(self):
+        return 'TFloat()'
 
 
 class TFunc(Type):
@@ -381,9 +390,12 @@ class TypeInference:
         return {name: t}
 
 
-def infer_type(expr):
+def infer_type(expr, starting_env=None):
+    if starting_env is None:
+        starting_env = {}
+
     type_inference = TypeInference()
-    tenv = TypeEnv({})
+    tenv = TypeEnv(starting_env)
     sub, typ = expr.get_type(tenv, type_inference)
     return typ.apply_sub(sub)
 
@@ -392,6 +404,19 @@ def main():
     expr1 = ELet('id', EAbs('x', EVar('x')),
                  EVar('id'))
     print(infer_type(expr1).show())
+
+    expr2 = EAbs(
+        'x',
+        ELet(
+            'y', EApp(EVar('id'), EVar('x')),
+            EApp(EVar('inc'), EVar('x'))
+        )
+    )
+    env2 = {
+        'id': Scheme(['a'], TFunc(TVar('a'), TVar('a'))),
+        'inc': Scheme([], TFunc(TInt(), TInt())),
+    }
+    print(infer_type(expr2, starting_env=env2).show())
 
 
 if __name__ == '__main__':
