@@ -439,6 +439,16 @@ def main():
     }
     print(infer_type(expr3, starting_env=env3).show())
 
+    # Polymorphic let binding:
+    expr4 = ELet(
+        'id', EAbs('x', EVar('x')),
+        ELet(
+            'y', EApp(EVar('id'), ELit(LFloat(0.123))),
+            EApp(EVar('id'), ELit(LInt(123)))
+        )
+    )
+    print(infer_type(expr4).show())
+
 
 if __name__ == '__main__':
     main()
