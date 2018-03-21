@@ -439,6 +439,15 @@ def main():
     }
     print(infer_type(expr3, starting_env=env3).show())
 
+    big_id = ELet(
+        'id', EAbs('x', EVar('x')),
+        EApp(
+            EApp(EVar('id'), EVar('id')),
+            EApp(EVar('id'), EVar('id'))
+        )
+    )
+    print('big_id:', infer_type(big_id, starting_env={}).show())
+
     # Polymorphic let binding:
     expr4 = ELet(
         'id', EAbs('x', EVar('x')),
